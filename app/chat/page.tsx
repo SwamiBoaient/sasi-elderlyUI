@@ -309,9 +309,10 @@ export default function ElderlyChatPage(): JSX.Element {
                       : "bg-white text-gray-800 shadow-md"
                   }`}
                 >
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                    {msg.content}
-                  </p>
+                  <p
+                    className="text-sm leading-relaxed"
+                    dangerouslySetInnerHTML={{ __html: msg.content }}
+                  />
                 </div>
               </div>
             ))
