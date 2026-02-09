@@ -1,0 +1,134 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Home page responsive background: phone default, laptop on lg */
+.home-bg {
+  background-image: url('/bgphonelogin.png');
+  /* Show the full phone image initially (no cropping); fill any remaining
+     area with the gradient. */
+  background-size: contain;
+  /* Anchor the phone background to the top-left and prevent tiling so you
+     won't see the bottom of the image repeated at the top when the page
+     scrolls or the container shifts. */
+  background-position: left top;
+  background-repeat: no-repeat;
+  background-attachment: scroll;
+  background-color: #000000;
+}
+
+/* Dashboard background: phone and laptop variants, similar behavior to home-bg */
+.dashboard-bg {
+  background-image: url('/bg_others_phone.png'), linear-gradient(to bottom right, #eff6ff, #eef2ff);
+  /* Show full phone image initially, no tiling */
+  background-size: contain;
+  background-position: left top;
+  background-repeat: no-repeat;
+  background-attachment: scroll;
+  background-color: #eef2ff;
+}
+
+/* Stretch background to fill screen on mobile when .stretched is present */
+.dashboard-bg.stretched {
+  background-size: 100% 100% !important;
+}
+
+@media (min-width: 1024px) {
+  .dashboard-bg {
+    background-image: url('/bg_others_laptop.png');
+    background-position: left center;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-color: #eef2ff;
+  }
+
+  .dashboard-bg.stretched {
+    background-size: 100% 100% !important;
+  }
+}
+
+/* NOTE: the `.home-bg.stretched` rule for large screens is defined inside
+   the `@media (min-width: 1024px)` block so stretching only applies on
+   laptop/desktop. We intentionally do not apply a global stretched rule
+   here so phone layouts keep `contain` behavior. */
+
+@media (min-width: 1024px) {
+  .home-bg {
+    /* Use a laptop-specific background on larger screens and show the full image
+       positioned to the left so the left-side content remains visible. No gradient overlay. */
+    background-image: url('/bglaptoplogin.png');
+    background-position: left center;
+    /* Initially show the full image (no cropping); remaining space is filled
+       by the background color. After the image loads we will add `.stretched` 
+       to the element to force a full-viewport stretch. */
+    background-size: contain;
+    background-color: #eef2ff;
+    background-repeat: no-repeat;
+  }
+
+  /* When `.stretched` is added we force the background to fill width & height */
+  .home-bg.stretched {
+    background-size: 100% 100% !important;
+  }
+}
+
+/* Dropdown styling for rounded corners */
+select.dropdown-rounded {
+  border-radius: 0.75rem;
+}
+
+/* Style the dropdown menu (options container) - browser-specific */
+select.dropdown-rounded option {
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+}
+
+/* For browsers that support it, style the dropdown list */
+@supports (background: paint(something)) {
+  select.dropdown-rounded {
+    border-radius: 0.75rem;
+  }
+}
+
+html, body {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+*::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  background: transparent;
+}
+
+/* Utility to hide scrollbars on scrollable elements while keeping them scrollable */
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
+}
+
+button, .btn {
+  cursor: pointer;
+}
+button:disabled, button[disabled], .btn:disabled, .btn[disabled] {
+  cursor: not-allowed;
+}
