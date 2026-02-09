@@ -285,6 +285,44 @@ export default function ElderlyChatPage(): JSX.Element {
         },
       ]);
     }
+
+    // 🔊 PLAY BOT VOICE SAFELY
+    if (processTextResponse.audio) {
+      const audioUrl = processTextResponse.audio.startsWith("http")
+        ? processTextResponse.audio
+        : `https://maria-subsidizable-maximina.ngrok-free.dev${processTextResponse.audio}`;
+
+      const audio = new Audio(audioUrl);
+      audio.preload = "auto";
+
+      const tryPlay = () => {
+        audio
+          .play()
+          .then(() => {
+            console.log("TTS playing...");
+          })
+          .catch((err) => {
+            console.log("Playback failed:", err);
+          });
+      };
+
+      // If user already interacted → play immediately
+      if (audioUnlockedRef.current) {
+        tryPlay();
+      } else {
+        console.log("Waiting for first interaction to play audio");
+
+        const unlockAndPlay = () => {
+          audioUnlockedRef.current = true;
+          tryPlay();
+          window.removeEventListener("click", unlockAndPlay);
+          window.removeEventListener("touchstart", unlockAndPlay);
+        };
+
+        window.addEventListener("click", unlockAndPlay);
+        window.addEventListener("touchstart", unlockAndPlay);
+      }
+    }
   }, [processTextResponse]);
 
   const handleLogout = () => {
