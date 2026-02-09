@@ -24,6 +24,7 @@ export default function ElderlyChatPage(): JSX.Element {
     processAudioResponse,
     processAudioResponseLoading,
   } = useProcessAudio();
+  const audioUnlockedRef = useRef(false);
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
@@ -170,8 +171,46 @@ export default function ElderlyChatPage(): JSX.Element {
     }
 
     // play bot voice
+    // if (processAudioResponse.audio) {
+    //   new Audio(processAudioResponse.audio).play().catch(() => {});
+    // }
+
+    // 🔊 PLAY BOT VOICE SAFELY
     if (processAudioResponse.audio) {
-      new Audio(processAudioResponse.audio).play().catch(() => {});
+      const audioUrl = processAudioResponse.audio.startsWith("http")
+        ? processAudioResponse.audio
+        : `https://maria-subsidizable-maximina.ngrok-free.dev${processAudioResponse.audio}`;
+
+      const audio = new Audio(audioUrl);
+      audio.preload = "auto";
+
+      const tryPlay = () => {
+        audio
+          .play()
+          .then(() => {
+            console.log("TTS playing...");
+          })
+          .catch((err) => {
+            console.log("Playback failed:", err);
+          });
+      };
+
+      // If user already interacted → play immediately
+      if (audioUnlockedRef.current) {
+        tryPlay();
+      } else {
+        console.log("Waiting for first interaction to play audio");
+
+        const unlockAndPlay = () => {
+          audioUnlockedRef.current = true;
+          tryPlay();
+          window.removeEventListener("click", unlockAndPlay);
+          window.removeEventListener("touchstart", unlockAndPlay);
+        };
+
+        window.addEventListener("click", unlockAndPlay);
+        window.addEventListener("touchstart", unlockAndPlay);
+      }
     }
 
     // stop loading HERE (not in sendAudio)
@@ -181,7 +220,19 @@ export default function ElderlyChatPage(): JSX.Element {
     textBeforeRecordingRef.current = "";
   }, [processAudioResponse]);
 
+  useEffect(() => {
+    const unlock = () => {
+      audioUnlockedRef.current = true;
+      window.removeEventListener("click", unlock);
+    };
+
+    window.addEventListener("click", unlock);
+    return () => window.removeEventListener("click", unlock);
+  }, []);
+
   const handleMicToggle = () => {
+    // unlock browser audio on first interaction
+    audioUnlockedRef.current = true;
     if (isRecording) {
       stopRecording();
     } else {
