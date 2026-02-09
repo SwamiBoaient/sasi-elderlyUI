@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, JSX } from "react";
+import { useState, useEffect, useRef, JSX } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useElderlyAuth } from "../contexts/ElderlyAuthContext";
@@ -8,6 +8,7 @@ import ElderlyProtectedRoute from "../components/ElderlyProtectedRoute";
 import Notification from "../components/Notification";
 import useProcessText, { ProcessTextPayload } from "../api/chat/ProcessText";
 import useProcessAudio from "../api/chat/ProcessAudio";
+import DOMPurify from "dompurify";
 
 interface Message {
   role: "user" | "assistant";
@@ -311,7 +312,9 @@ export default function ElderlyChatPage(): JSX.Element {
                 >
                   <p
                     className="text-sm leading-relaxed"
-                    dangerouslySetInnerHTML={{ __html: msg.content }}
+                    dangerouslySetInnerHTML={{
+                      __html: DOMPurify.sanitize(msg.content),
+                    }}
                   />
                 </div>
               </div>
