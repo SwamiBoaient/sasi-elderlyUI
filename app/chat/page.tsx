@@ -269,8 +269,6 @@ export default function ElderlyChatPage(): JSX.Element {
     createProcessText(url, payload);
   };
 
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-
   useEffect(() => {
     if (!processTextResponse) return;
 
@@ -288,44 +286,41 @@ export default function ElderlyChatPage(): JSX.Element {
       ]);
     }
 
-    // 🔊 PLAY BOT VOICE SAFELY (cross-device safe)
-    if (processTextResponse.audio && audioRef.current) {
+    // 🔊 PLAY BOT VOICE SAFELY
+    if (processTextResponse.audio) {
       const audioUrl = processTextResponse.audio.startsWith("http")
         ? processTextResponse.audio
         : `https://maria-subsidizable-maximina.ngrok-free.dev${processTextResponse.audio}`;
 
-      const audioEl = audioRef.current;
-      audioEl.src = audioUrl;
-      audioEl.load();
+      const audio = new Audio(audioUrl);
+      audio.preload = "auto";
 
-      const tryPlay = async () => {
-        try {
-          await audioEl.play();
-          console.log("TTS playing...");
-        } catch (err) {
-          console.log("Autoplay blocked, waiting user interaction");
-
-          const unlockAndPlay = async () => {
-            try {
-              audioUnlockedRef.current = true;
-              await audioEl.play();
-            } catch (e) {
-              console.log("Playback still blocked:", e);
-            }
-            window.removeEventListener("click", unlockAndPlay);
-            window.removeEventListener("touchstart", unlockAndPlay);
-          };
-
-          window.addEventListener("click", unlockAndPlay);
-          window.addEventListener("touchstart", unlockAndPlay);
-        }
+      const tryPlay = () => {
+        audio
+          .play()
+          .then(() => {
+            console.log("TTS playing...");
+          })
+          .catch((err) => {
+            console.log("Playback failed:", err);
+          });
       };
 
-      // play immediately if already unlocked
+      // If user already interacted → play immediately
       if (audioUnlockedRef.current) {
         tryPlay();
       } else {
-        tryPlay(); // attempt once, fallback handles interaction
+        console.log("Waiting for first interaction to play audio");
+
+        const unlockAndPlay = () => {
+          audioUnlockedRef.current = true;
+          tryPlay();
+          window.removeEventListener("click", unlockAndPlay);
+          window.removeEventListener("touchstart", unlockAndPlay);
+        };
+
+        window.addEventListener("click", unlockAndPlay);
+        window.addEventListener("touchstart", unlockAndPlay);
       }
     }
   }, [processTextResponse]);
