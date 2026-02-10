@@ -286,27 +286,69 @@ export default function ElderlyChatPage(): JSX.Element {
       ]);
     }
 
-    // 🔊 PLAY BOT VOICE SAFELY
-    if (processTextResponse.audio) {
-      const audioUrl = processTextResponse.audio.startsWith("http")
-        ? processTextResponse.audio
-        : `https://maria-subsidizable-maximina.ngrok-free.dev${processTextResponse.audio}`;
+    // // 🔊 PLAY BOT VOICE SAFELY
+    // if (processTextResponse.audio) {
+    //   const audioUrl = processTextResponse.audio.startsWith("http")
+    //     ? processTextResponse.audio
+    //     : `https://maria-subsidizable-maximina.ngrok-free.dev${processTextResponse.audio}`;
 
-      const audio = new Audio(audioUrl);
+    //   const audio = new Audio(audioUrl);
+    //   audio.preload = "auto";
+
+    //   const tryPlay = () => {
+    //     audio
+    //       .play()
+    //       .then(() => {
+    //         console.log("TTS playing...");
+    //       })
+    //       .catch((err) => {
+    //         console.log("Playback failed:", err);
+    //       });
+    //   };
+
+    //   // If user already interacted → play immediately
+    //   if (audioUnlockedRef.current) {
+    //     tryPlay();
+    //   } else {
+    //     console.log("Waiting for first interaction to play audio");
+
+    //     const unlockAndPlay = () => {
+    //       audioUnlockedRef.current = true;
+    //       tryPlay();
+    //       window.removeEventListener("click", unlockAndPlay);
+    //       window.removeEventListener("touchstart", unlockAndPlay);
+    //     };
+
+    //     window.addEventListener("click", unlockAndPlay);
+    //     window.addEventListener("touchstart", unlockAndPlay);
+    //   }
+    // }
+
+    // 🔊 PLAY BOT VOICE FROM BASE64 SAFELY
+    if (processTextResponse.audio) {
+      // handle if backend already sends full data URL
+      const audioSrc = processTextResponse.audio.startsWith("data:audio")
+        ? processTextResponse.audio
+        : `data:audio/wav;base64,${processTextResponse.audio}`;
+
+      const audio = new Audio(audioSrc);
       audio.preload = "auto";
 
       const tryPlay = () => {
         audio
           .play()
           .then(() => {
-            console.log("TTS playing...");
+            console.log("TTS base64 playing...");
           })
           .catch((err) => {
             console.log("Playback failed:", err);
+
+            // Safari / Chrome sometimes need load()
+            audio.load();
           });
       };
 
-      // If user already interacted → play immediately
+      // autoplay unlock
       if (audioUnlockedRef.current) {
         tryPlay();
       } else {
