@@ -402,7 +402,12 @@ export default function ElderlyChatPage(): JSX.Element {
                   <p
                     className="text-sm leading-relaxed"
                     dangerouslySetInnerHTML={{
-                      __html: DOMPurify.sanitize(msg.content),
+                      __html: DOMPurify.sanitize(msg.content, {
+                        ADD_ATTR: ["target", "rel"],
+                      }).replace(
+                        /<a /g,
+                        '<a target="_blank" rel="noopener noreferrer" ',
+                      ),
                     }}
                   />
                 </div>
