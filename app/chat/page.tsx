@@ -344,7 +344,7 @@ export default function ElderlyChatPage(): JSX.Element {
             </div>
             <div>
               <h2 className="text-lg font-semibold text-gray-800">
-                {elderlyData?.preferred_name || "User"}
+                {elderlyData?.preferred_name || "Shan"}
               </h2>
               <p className="text-xs text-gray-500">Online</p>
             </div>

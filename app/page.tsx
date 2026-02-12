@@ -530,7 +530,7 @@ export default function ElderlyLoginPage() {
                 disabled={isLoading}
                 className="w-full bg-[#8b5dd3] hover:bg-[#3e189f] active:bg-[#2d1075] text-white py-4 rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isLoading ? "Verifying..." : "Enter"}
+                {isLoading ? "Ok" : "Enter"}
               </button>
             </form>
           ) : (
@@ -591,7 +591,7 @@ export default function ElderlyLoginPage() {
                   // disabled={isLoading || !isCapturing}
                   className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 text-white py-4 rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isLoading ? "Verifying..." : "Verify Face"}
+                  {isLoading ? "Ok" : "Verify Face"}
                 </button>
               </div>
             </div>
