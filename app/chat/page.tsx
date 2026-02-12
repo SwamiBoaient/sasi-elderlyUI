@@ -189,13 +189,13 @@ export default function ElderlyChatPage(): JSX.Element {
       return updated;
     });
 
-    if (processAudioResponse.response) {
-      newMessages.push({
-        role: "assistant",
-        content: processAudioResponse.response,
-        timestamp: new Date(),
-      });
-    }
+    // if (processAudioResponse.response) {
+    //   newMessages.push({
+    //     role: "assistant",
+    //     content: processAudioResponse.response,
+    //     timestamp: new Date(),
+    //   });
+    // }
 
     if (newMessages.length) {
       setMessages((prev) => [...prev, ...newMessages]);
