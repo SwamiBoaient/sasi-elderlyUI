@@ -170,32 +170,31 @@ export default function ElderlyChatPage(): JSX.Element {
       setMessages((prev) => [...prev, ...newMessages]);
     }
 
-    // play bot voice
-    // if (processAudioResponse.audio) {
-    //   new Audio(processAudioResponse.audio).play().catch(() => {});
-    // }
-
-    // 🔊 PLAY BOT VOICE SAFELY
+    // 🔊 PLAY BOT VOICE FROM BASE64 SAFELY
     if (processAudioResponse.audio) {
-      const audioUrl = processAudioResponse.audio.startsWith("http")
+      // handle if backend already sends full data URL
+      const audioSrc = processAudioResponse.audio.startsWith("data:audio")
         ? processAudioResponse.audio
-        : `https://maria-subsidizable-maximina.ngrok-free.dev${processAudioResponse.audio}`;
+        : `data:audio/wav;base64,${processAudioResponse.audio}`;
 
-      const audio = new Audio(audioUrl);
+      const audio = new Audio(audioSrc);
       audio.preload = "auto";
 
       const tryPlay = () => {
         audio
           .play()
           .then(() => {
-            console.log("TTS playing...");
+            console.log("TTS base64 playing...");
           })
           .catch((err) => {
             console.log("Playback failed:", err);
+
+            // Safari / Chrome sometimes need load()
+            audio.load();
           });
       };
 
-      // If user already interacted → play immediately
+      // autoplay unlock
       if (audioUnlockedRef.current) {
         tryPlay();
       } else {
@@ -285,44 +284,6 @@ export default function ElderlyChatPage(): JSX.Element {
         },
       ]);
     }
-
-    // // 🔊 PLAY BOT VOICE SAFELY
-    // if (processTextResponse.audio) {
-    //   const audioUrl = processTextResponse.audio.startsWith("http")
-    //     ? processTextResponse.audio
-    //     : `https://maria-subsidizable-maximina.ngrok-free.dev${processTextResponse.audio}`;
-
-    //   const audio = new Audio(audioUrl);
-    //   audio.preload = "auto";
-
-    //   const tryPlay = () => {
-    //     audio
-    //       .play()
-    //       .then(() => {
-    //         console.log("TTS playing...");
-    //       })
-    //       .catch((err) => {
-    //         console.log("Playback failed:", err);
-    //       });
-    //   };
-
-    //   // If user already interacted → play immediately
-    //   if (audioUnlockedRef.current) {
-    //     tryPlay();
-    //   } else {
-    //     console.log("Waiting for first interaction to play audio");
-
-    //     const unlockAndPlay = () => {
-    //       audioUnlockedRef.current = true;
-    //       tryPlay();
-    //       window.removeEventListener("click", unlockAndPlay);
-    //       window.removeEventListener("touchstart", unlockAndPlay);
-    //     };
-
-    //     window.addEventListener("click", unlockAndPlay);
-    //     window.addEventListener("touchstart", unlockAndPlay);
-    //   }
-    // }
 
     // 🔊 PLAY BOT VOICE FROM BASE64 SAFELY
     if (processTextResponse.audio) {
