@@ -100,9 +100,19 @@ export default function ElderlyChatPage(): JSX.Element {
         const audioBlob = new Blob(audioChunksRef.current, {
           type: "audio/webm",
         });
+
+        // 👇 optimistic user voice message
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "user",
+            content: "🎤 Voice message...",
+            timestamp: new Date(),
+          },
+        ]);
+
         await sendAudioForTranscription(audioBlob);
 
-        // Stop all tracks
         stream.getTracks().forEach((track) => track.stop());
       };
 
@@ -150,13 +160,34 @@ export default function ElderlyChatPage(): JSX.Element {
 
     const newMessages: Message[] = [];
 
-    if (processAudioResponse.transcript) {
-      newMessages.push({
-        role: "user",
-        content: processAudioResponse.transcript,
-        timestamp: new Date(),
-      });
-    }
+    setMessages((prev) => {
+      const updated = [...prev];
+
+      // replace last user placeholder
+      for (let i = updated.length - 1; i >= 0; i--) {
+        if (
+          updated[i].role === "user" &&
+          updated[i].content === "🎤 Voice message..."
+        ) {
+          updated[i] = {
+            ...updated[i],
+            content: processAudioResponse.transcript || "🎤 Voice message",
+          };
+          break;
+        }
+      }
+
+      // append assistant response
+      if (processAudioResponse.response) {
+        updated.push({
+          role: "assistant",
+          content: processAudioResponse.response,
+          timestamp: new Date(),
+        });
+      }
+
+      return updated;
+    });
 
     if (processAudioResponse.response) {
       newMessages.push({
