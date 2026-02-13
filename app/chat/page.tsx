@@ -81,14 +81,23 @@ export default function ElderlyChatPage(): JSX.Element {
   const startRecording = async () => {
     try {
       setAudioError("");
+      // 👇 show voice message immediately when mic ON
+
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
-      // Store existing text
-      textBeforeRecordingRef.current = inputText;
+      // 👇 show listening immediately when mic ON
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "user",
+          content: "🎤 Voice message...",
+          timestamp: new Date(),
+        },
+      ]);
 
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
@@ -101,19 +110,19 @@ export default function ElderlyChatPage(): JSX.Element {
           type: "audio/webm",
         });
 
-        // 👇 optimistic user voice message
-        setMessages((prev) => [
-          ...prev,
-          {
-            role: "user",
-            content: "🎤 Voice message...",
-            timestamp: new Date(),
-          },
-        ]);
-
-        await sendAudioForTranscription(audioBlob);
-
         stream.getTracks().forEach((track) => track.stop());
+
+        // if no audio captured
+        if (!audioBlob || audioBlob.size === 0) {
+          handleAudioFailure("No audio captured");
+          return;
+        }
+
+        try {
+          await sendAudioForTranscription(audioBlob);
+        } catch (err) {
+          handleAudioFailure("Voice processing failed");
+        }
       };
 
       mediaRecorder.start();
@@ -135,11 +144,11 @@ export default function ElderlyChatPage(): JSX.Element {
   };
 
   const sendAudioForTranscription = async (audioBlob: Blob) => {
-    try {
-      setIsProcessingAudio(true);
-      setAudioError("");
-      setError("");
+    setIsProcessingAudio(true);
+    setAudioError("");
+    setError("");
 
+    try {
       const formData = new FormData();
       formData.append("audio", audioBlob, "recording.webm");
 
@@ -147,108 +156,121 @@ export default function ElderlyChatPage(): JSX.Element {
         formData.append("sessionId", sessionId);
       }
 
+      // this does NOT return response
       await createProcessAudio("process_audio", formData);
     } catch (err) {
       console.error("Transcription error:", err);
-      setAudioError("Failed to process audio");
-      setIsProcessingAudio(false);
+      handleAudioFailure("Server not reachable");
     }
   };
 
   useEffect(() => {
     if (!processAudioResponse) return;
 
-    const newMessages: Message[] = [];
-
     setMessages((prev) => {
       const updated = [...prev];
 
-      // replace last user placeholder
+      // 1️⃣ replace "Listening..." with transcript
       for (let i = updated.length - 1; i >= 0; i--) {
         if (
           updated[i].role === "user" &&
-          updated[i].content === "🎤 Voice message..."
+          updated[i].content === "🎤 Listening..."
         ) {
           updated[i] = {
             ...updated[i],
             content: processAudioResponse.transcript || "🎤 Voice message",
           };
+
+          // 2️⃣ after transcript → show assistant loading
+          updated.push({
+            role: "assistant",
+            content: "loading...",
+            timestamp: new Date(),
+          });
+
           break;
         }
-      }
-
-      // append assistant response
-      if (processAudioResponse.response) {
-        updated.push({
-          role: "assistant",
-          content: processAudioResponse.response,
-          timestamp: new Date(),
-        });
       }
 
       return updated;
     });
 
-    // if (processAudioResponse.response) {
-    //   newMessages.push({
-    //     role: "assistant",
-    //     content: processAudioResponse.response,
-    //     timestamp: new Date(),
-    //   });
-    // }
+    // 3️⃣ replace assistant loading with real response
+    setTimeout(() => {
+      setMessages((prev) => {
+        const updated = [...prev];
 
-    if (newMessages.length) {
-      setMessages((prev) => [...prev, ...newMessages]);
-    }
+        for (let i = updated.length - 1; i >= 0; i--) {
+          if (
+            updated[i].role === "assistant" &&
+            updated[i].content === "loading..."
+          ) {
+            updated[i] = {
+              role: "assistant",
+              content:
+                processAudioResponse.response ||
+                "Sorry, I couldn’t understand.",
+              timestamp: new Date(),
+            };
+            break;
+          }
+        }
 
-    // 🔊 PLAY BOT VOICE FROM BASE64 SAFELY
+        return updated;
+      });
+    }, 300);
+
+    setIsProcessingAudio(false);
+
+    // 🔊 play TTS
     if (processAudioResponse.audio) {
-      // handle if backend already sends full data URL
       const audioSrc = processAudioResponse.audio.startsWith("data:audio")
         ? processAudioResponse.audio
         : `data:audio/wav;base64,${processAudioResponse.audio}`;
 
       const audio = new Audio(audioSrc);
       audio.preload = "auto";
-
-      const tryPlay = () => {
-        audio
-          .play()
-          .then(() => {
-            console.log("TTS base64 playing...");
-          })
-          .catch((err) => {
-            console.log("Playback failed:", err);
-
-            // Safari / Chrome sometimes need load()
-            audio.load();
-          });
-      };
-
-      // autoplay unlock
-      if (audioUnlockedRef.current) {
-        tryPlay();
-      } else {
-        console.log("Waiting for first interaction to play audio");
-
-        const unlockAndPlay = () => {
-          audioUnlockedRef.current = true;
-          tryPlay();
-          window.removeEventListener("click", unlockAndPlay);
-          window.removeEventListener("touchstart", unlockAndPlay);
-        };
-
-        window.addEventListener("click", unlockAndPlay);
-        window.addEventListener("touchstart", unlockAndPlay);
-      }
+      audio.play().catch(() => audio.load());
     }
-
-    // stop loading HERE (not in sendAudio)
-    setIsProcessingAudio(false);
-
-    // cleanup like old code
-    textBeforeRecordingRef.current = "";
   }, [processAudioResponse]);
+
+  const handleAudioFailure = (message?: string) => {
+    setMessages((prev) => {
+      const updated = [...prev];
+
+      // replace "Listening..." with error text
+      for (let i = updated.length - 1; i >= 0; i--) {
+        if (
+          updated[i].role === "user" &&
+          updated[i].content === "🎤 Listening..."
+        ) {
+          updated[i] = {
+            ...updated[i],
+            content: "🎤 Voice not captured",
+          };
+          break;
+        }
+      }
+
+      // remove assistant loading if exists
+      for (let i = updated.length - 1; i >= 0; i--) {
+        if (
+          updated[i].role === "assistant" &&
+          updated[i].content === "loading..."
+        ) {
+          updated.splice(i, 1);
+          break;
+        }
+      }
+
+      return updated;
+    });
+
+    setAudioError(message || "⚠️ Unable to process voice. Please try again.");
+    setIsProcessingAudio(false);
+    setIsRecording(false);
+    setIsMicMuted(true);
+  };
 
   useEffect(() => {
     const unlock = () => {
@@ -371,7 +393,7 @@ export default function ElderlyChatPage(): JSX.Element {
         <div className="bg-white shadow-md px-4 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white font-bold">
-              {elderlyData?.preferred_name?.charAt(0).toUpperCase() || "U"}
+              {elderlyData?.preferred_name?.charAt(0).toUpperCase() || "S"}
             </div>
             <div>
               <h2 className="text-lg font-semibold text-gray-800">
