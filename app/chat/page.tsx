@@ -81,7 +81,6 @@ export default function ElderlyChatPage(): JSX.Element {
   const startRecording = async () => {
     try {
       setAudioError("");
-      // 👇 show voice message immediately when mic ON
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
@@ -94,7 +93,7 @@ export default function ElderlyChatPage(): JSX.Element {
         ...prev,
         {
           role: "user",
-          content: "🎤 Voice message...",
+          content: "🎤 Listening...",
           timestamp: new Date(),
         },
       ]);
