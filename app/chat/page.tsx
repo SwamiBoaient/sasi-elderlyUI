@@ -435,9 +435,7 @@ export default function ElderlyChatPage(): JSX.Element {
               <p className="text-lg mb-2">
                 👋 Hi {elderlyData?.preferred_name}!
               </p>
-              <p className="text-sm">
-                Start a conversation by typing a message below
-              </p>
+              <p className="text-sm">I am LifeEase, your companion.</p>
             </div>
           ) : (
             messages.map((msg, index) => (
